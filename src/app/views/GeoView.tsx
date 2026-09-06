@@ -1,5 +1,5 @@
 /**
- * 地域ビュー。都道府県 × 住宅指標の相対比較。
+ * 地域ビュー。都道府県 × 下水道・水洗化・人口当たり苦情。
  */
 
 import { use, useMemo, useState } from "react";
@@ -10,6 +10,7 @@ import { TypePicker, type PickerRow } from "../components/TypePicker.tsx";
 import { TileMap, type Tile } from "../components/TileMap.tsx";
 import { YearSelect } from "../components/YearSelect.tsx";
 import { useUrlState } from "../hooks/useUrlState.ts";
+import { METRICS } from "../../lib/data/labels.ts";
 
 const STANDOUT = 5;
 
@@ -21,14 +22,19 @@ const pct = new Intl.NumberFormat("ja-JP", {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 });
-const areaFmt = new Intl.NumberFormat("ja-JP", {
+const perCap = new Intl.NumberFormat("ja-JP", {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 });
 
+function kindOf(metric: string) {
+  return METRICS.find((m) => m.code === metric)?.kind ?? "rate";
+}
+
 function formatValue(metric: string, value: number | null): string {
   if (value === null) return "データなし";
-  if (metric === "floor_area") return `${areaFmt.format(value)}㎡`;
+  const kind = kindOf(metric);
+  if (kind === "per_capita") return `${perCap.format(value)}件/10万人`;
   return `${pct.format(value * 100)}%`;
 }
 
@@ -80,7 +86,7 @@ export function GeoView() {
   const selectable = useMemo(() => geoMetrics(metrics), [metrics]);
 
   const [year, setYear] = useUrlState("year", years[0]!, (v) => years.includes(v));
-  const [metric, setMetric] = useUrlState<string>("metric", "vacant", (v) =>
+  const [metric, setMetric] = useUrlState<string>("metric", "sewerage", (v) =>
     selectable.some((c) => c.code === v),
   );
   const [area, setArea] = useUrlState<string>("area", "", (v) =>
@@ -98,8 +104,9 @@ export function GeoView() {
   const picker = useMemo((): PickerRow[] => {
     return selectable.map((m) => {
       const v = cube.at("value", { metric: m.code, year, area: "00000" });
+      const kind = kindOf(m.code);
       const magnitude =
-        v === null ? 0 : m.code === "floor_area" ? v * 100 : Math.round(v * 10000);
+        v === null ? 0 : kind === "per_capita" ? Math.round(v * 10) : Math.round(v * 10000);
       return {
         code: m.code,
         label: m.label,
@@ -205,7 +212,7 @@ export function GeoView() {
           <TypePicker rows={picker} selected={metric} onSelect={setMetric} />
         </div>
         <p className="mt-2 border-t border-rule px-2 pt-2 text-[10.5px] leading-relaxed text-faint">
-          地図の色は全国比。率・面積とも同じ相対尺度。
+          地図の色は全国比。普及率・人口当たりで同じ相対尺度。
         </p>
       </aside>
 
@@ -261,6 +268,7 @@ export function GeoView() {
 
         <p className="mt-5 border-t border-rule pt-3 text-[11px] leading-relaxed text-muted">
           数値は県の指標値を全国値で割った相対値。全国が1。地図は模式図。色の尺度は指標で共通（全国の1/1.5〜1.5倍）。
+          下水道普及率の全国値は 2012–2015 年度が欠測。
         </p>
       </main>
     </div>

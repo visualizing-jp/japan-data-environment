@@ -1,16 +1,20 @@
+import { Suspense } from "react";
+import { EraView } from "./views/EraView.tsx";
+import { KindView } from "./views/KindView.tsx";
+import { GeoView } from "./views/GeoView.tsx";
 import { useUrlState } from "./hooks/useUrlState.ts";
 
 const VIEWS = [
-  { id: "era", label: "時代", hint: "", ready: false },
-  { id: "air", label: "大気", hint: "", ready: false },
-  { id: "water", label: "水質", hint: "", ready: false },
+  { id: "era", label: "時代", hint: "1975–2023", ready: true },
+  { id: "kind", label: "大気・水質", hint: "種類別苦情", ready: true },
+  { id: "geo", label: "地域", hint: "都道府県", ready: true },
 ] as const;
 
 type ViewId = (typeof VIEWS)[number]["id"];
 
 export function App() {
   const [view, setView] = useUrlState<ViewId>("view", "era", (v) =>
-    VIEWS.some((x) => x.id === v),
+    VIEWS.some((x) => x.id === v && x.ready),
   );
 
   return (
@@ -22,7 +26,7 @@ export function App() {
               日本では空気と水はどれだけきれいになったか
             </h1>
             <p className="text-[11px] text-muted">
-              環境統計
+              公害苦情調査・下水道関連指標（社会・人口統計体系）
             </p>
           </div>
           <nav className="flex gap-1 -mb-px" aria-label="ビュー">
@@ -49,15 +53,15 @@ export function App() {
         </div>
       </header>
 
-<main className="mx-auto w-full max-w-[1240px] px-6 py-16">
-  <p className="text-[13px] text-muted">このテーマは準備中です。</p>
-  <p className="mt-2 text-[12px] text-faint">
-    主な統計: 環境統計 ／ 可視化の核: 大気汚染・水質・下水道普及率など
-  </p>
-</main>
+      <Suspense key={view} fallback={<Loading />}>
+        {view === "era" && <EraView />}
+        {view === "kind" && <KindView />}
+        {view === "geo" && <GeoView />}
+      </Suspense>
 
       <footer className="mx-auto w-full max-w-[1240px] px-6 pt-2 pb-10 text-[11px] leading-relaxed text-faint">
-        出典: 環境統計（詳細は docs/data-sources.md。表IDは調査後に確定）。
+        出典: 公害等調整委員会「公害苦情調査」、下水道・水洗化は社会・人口統計体系（e-Stat）。
+        苦情は受付件数であり環境濃度そのものではない。種類別は2016年度まで。
         <a
           href="https://visualizing.jp/"
           className="mt-2 block w-fit transition-colors duration-150 hover:text-muted"
@@ -65,6 +69,14 @@ export function App() {
           visualizing.jp
         </a>
       </footer>
+    </div>
+  );
+}
+
+function Loading() {
+  return (
+    <div className="mx-auto w-full max-w-[1240px] px-6 py-16 text-[12px] text-faint">
+      読み込み中
     </div>
   );
 }

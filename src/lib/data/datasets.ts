@@ -11,74 +11,47 @@ export interface DatasetDef {
   query?: Record<string, string>;
 }
 
-/** 基礎データの件数コード（カンマ区切り、仕様上限100）。 */
-const COUNT_CODES = [
-  "H1100",
-  "H1101",
-  "H1102",
-  "H110202",
-  "H1310",
-  "H1320",
-  "H1321",
-  "H1322",
-  "H1323",
-  "H1401",
-  "H1402",
-  "H1403",
-  "H1404",
-  "H2130",
-  "H2101",
-  "H2102",
-  "H2103",
-  "H2104",
-  "H2105",
-  "H2106",
-  "H2107",
-  "H2108",
+/** 社会生活統計指標 Ｈ居住（下水道・水洗化）。 */
+const HOUSING_RATE_CODES = [
+  "#H05304",
+  "#H0530401",
+  "#H05306",
+  "#H05307",
+  "#H05308",
 ].join(",");
 
-/** 社会生活統計指標の率コード。 */
-const RATE_CODES = [
-  "#H01301",
-  "#H01302",
-  "#H0130202",
-  "#H01401",
-  "#H01402",
-  "#H01403",
-  "#H01405",
-].join(",");
+/** 基礎データ Ｋ安全（公害苦情件数）。 */
+const SAFETY_COUNT_CODES = ["K6101", "K6103", "K610301", "K610302"].join(",");
+
+/** 社会生活統計指標 Ｋ安全（人口当たり苦情）。 */
+const SAFETY_RATE_CODES = ["#K09201"].join(",");
 
 export const DATASETS = {
-  ssdsCount: {
-    key: "ssds-count",
-    statsDataId: "0000010108",
-    label: "社会・人口統計体系 基礎データ Ｈ居住（件数・延べ面積・畳数）",
-    query: { cdCat01: COUNT_CODES },
-  },
-
-  ssdsRate: {
-    key: "ssds-rate",
+  ssdsHousingRate: {
+    key: "ssds-housing-rate",
     statsDataId: "0000010208",
-    label: "社会・人口統計体系 社会生活統計指標 Ｈ居住（比率）",
-    query: { cdCat01: RATE_CODES },
+    label: "社会・人口統計体系 社会生活統計指標 Ｈ居住（下水道・水洗化）",
+    query: { cdCat01: HOUSING_RATE_CODES },
   },
 
-  vacant2013: {
-    key: "vacant-2013",
-    statsDataId: "0003095315",
-    label: "住宅・土地統計調査 2013 居住世帯の有無(9区分)",
+  ssdsSafetyCount: {
+    key: "ssds-safety-count",
+    statsDataId: "0000010111",
+    label: "社会・人口統計体系 基礎データ Ｋ安全（公害苦情件数）",
+    query: { cdCat01: SAFETY_COUNT_CODES },
   },
 
-  vacant2018: {
-    key: "vacant-2018",
-    statsDataId: "0003326560",
-    label: "住宅・土地統計調査 2018 居住世帯の有無(9区分)",
+  ssdsSafetyRate: {
+    key: "ssds-safety-rate",
+    statsDataId: "0000010211",
+    label: "社会・人口統計体系 社会生活統計指標 Ｋ安全（公害苦情比率）",
+    query: { cdCat01: SAFETY_RATE_CODES },
   },
 
-  vacant2023: {
-    key: "vacant-2023",
-    statsDataId: "0004015740",
-    label: "住宅・土地統計調査 2023 居住世帯の有無(9区分)",
+  complaintKind: {
+    key: "complaint-kind",
+    statsDataId: "0003293269",
+    label: "公害苦情調査 公害の種類別苦情件数の推移",
   },
 } as const satisfies Record<string, DatasetDef>;
 

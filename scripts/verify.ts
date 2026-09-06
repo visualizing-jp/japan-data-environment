@@ -25,8 +25,7 @@ interface EraFile extends CubeJson {
   metrics: DictEntry[];
 }
 
-interface FormFile extends CubeJson {
-  formDims: DictEntry[];
+interface KindFile extends CubeJson {
   codes: DictEntry[];
 }
 
@@ -36,65 +35,94 @@ interface GeoFile extends CubeJson {
 }
 
 const eraRaw = JSON.parse(await readFile(resolve(DATA, "era.json"), "utf8")) as EraFile;
-const formRaw = JSON.parse(await readFile(resolve(DATA, "form.json"), "utf8")) as FormFile;
+const kindRaw = JSON.parse(await readFile(resolve(DATA, "kind.json"), "utf8")) as KindFile;
 const geoRaw = JSON.parse(await readFile(resolve(DATA, "geo.json"), "utf8")) as GeoFile;
 
 const era = new CubeView(eraRaw);
-const form = new CubeView(formRaw);
+const kind = new CubeView(kindRaw);
 const geo = new CubeView(geoRaw);
 
-const total2023 = era.at("dwellings", { metric: "total", year: "2023" });
+const sewer1975 = era.at("rate", { metric: "sewerage", year: "1975" });
 ok(
-  "era 2023 総住宅数が妥当",
-  total2023 !== null && total2023 > 60_000_000 && total2023 < 70_000_000,
-  String(total2023),
+  "era 1975 下水道普及率≈22.8%",
+  sewer1975 !== null && near(sewer1975, 0.228, 0.002),
+  String(sewer1975),
 );
 
-const vacantRate2023 = era.at("rate", { metric: "vacant", year: "2023" });
+const sewer2011 = era.at("rate", { metric: "sewerage", year: "2011" });
 ok(
-  "era 2023 空き家率≈13.8%",
-  vacantRate2023 !== null && near(vacantRate2023, 0.138, 0.005),
-  String(vacantRate2023),
+  "era 2011 下水道普及率≈74.4%",
+  sewer2011 !== null && near(sewer2011, 0.744, 0.002),
+  String(sewer2011),
 );
 
-const ownedRate2023 = era.at("rate", { metric: "owned", year: "2023" });
+const sewer2021 = era.at("rate", { metric: "sewerage", year: "2021" });
 ok(
-  "era 2023 持ち家比率≈60.9%",
-  ownedRate2023 !== null && near(ownedRate2023, 0.609, 0.01),
-  String(ownedRate2023),
+  "era 2021 下水道普及率≈80.5%",
+  sewer2021 !== null && near(sewer2021, 0.805, 0.002),
+  String(sewer2021),
 );
 
-const vacant1978 = era.at("rate", { metric: "vacant", year: "1978" });
+const sewer2013 = era.at("rate", { metric: "sewerage", year: "2013" });
+ok("era 2013 全国下水道は欠測", sewer2013 === null, String(sewer2013));
+
+const complaints1975 = era.at("cases", { metric: "complaints", year: "1975" });
 ok(
-  "era 空き家率が上昇 (1978→2023)",
-  vacant1978 !== null && vacantRate2023 !== null && vacantRate2023 > vacant1978,
-  `${vacant1978} → ${vacantRate2023}`,
+  "era 1975 公害苦情取扱≈94,654",
+  complaints1975 !== null && near(complaints1975, 94_654, 1),
+  String(complaints1975),
 );
 
-const tenureSum = ["owned", "rented_public", "rented_private", "rented_issued"].reduce(
-  (n, code) => n + (form.at("share", { dim: "tenure", code, year: "2023" }) ?? 0),
+const complaints2023 = era.at("cases", { metric: "complaints", year: "2023" });
+ok(
+  "era 2023 公害苦情取扱≈74,608",
+  complaints2023 !== null && near(complaints2023, 74_608, 1),
+  String(complaints2023),
+);
+
+const per100k1975 = era.at("rate", { metric: "complaints_per_100k", year: "1975" });
+ok(
+  "era 1975 人口10万人当たり≈60.1",
+  per100k1975 !== null && near(per100k1975, 60.1, 0.05),
+  String(per100k1975),
+);
+
+const water1972 = kind.at("cases", { code: "water", year: "1972" });
+ok(
+  "kind 1972 水質汚濁≈14,197",
+  water1972 !== null && near(water1972, 14_197, 1),
+  String(water1972),
+);
+
+const water2016 = kind.at("cases", { code: "water", year: "2016" });
+ok(
+  "kind 2016 水質汚濁≈6,442",
+  water2016 !== null && near(water2016, 6_442, 1),
+  String(water2016),
+);
+
+const kindShareSum = ["air", "water", "noise", "vibration", "odor", "soil", "subsidence"].reduce(
+  (n, code) => n + (kind.at("share", { code, year: "2016" }) ?? 0),
   0,
 );
-ok("form 2023 所有 share 合計≈1", near(tenureSum, 1, 0.05), String(tenureSum));
-
-const vacantShareSum = ["secondary", "for_rent", "for_sale", "other_vacant"].reduce(
-  (n, code) => n + (form.at("share", { dim: "vacancy", code, year: "2023" }) ?? 0),
-  0,
-);
-ok("form 2023 空き家種類 share 合計≈1", near(vacantShareSum, 1, 0.05), String(vacantShareSum));
+// 典型7内訳の合計は典型7計に近く、合計(100)には典型7以外も含まれる
+ok("kind 2016 主要種類 share>0", kindShareSum > 0.3, String(kindShareSum));
 
 ok("geo 都道府県が47+全国", geoRaw.areas.length === 48, String(geoRaw.areas.length));
 
-const tokyoVacant = geo.at("value", { metric: "vacant", year: "2023", area: "13000" });
-const nationalVacant = geo.at("value", { metric: "vacant", year: "2023", area: "00000" });
+const tokyo = geo.at("value", { metric: "complaints_per_100k", year: "2023", area: "13000" });
+const national = geo.at("value", { metric: "complaints_per_100k", year: "2023", area: "00000" });
 ok(
-  "geo 東京の空き家率が全国と異なる",
-  tokyoVacant !== null && nationalVacant !== null && tokyoVacant !== nationalVacant,
-  `東京 ${tokyoVacant} / 全国 ${nationalVacant}`,
+  "geo 東京の人口当たり苦情が全国と異なる",
+  tokyo !== null && national !== null && tokyo !== national,
+  `東京 ${tokyo} / 全国 ${national}`,
 );
 
-const relNat = geo.at("relative", { metric: "vacant", year: "2023", area: "00000" });
+const relNat = geo.at("relative", { metric: "complaints_per_100k", year: "2023", area: "00000" });
 ok("geo 全国 relative=1", relNat === 1, String(relNat));
+
+const flush1975 = era.at("rate", { metric: "flush", year: "1975" });
+ok("era 1975 水洗化人口比率あり", flush1975 !== null && flush1975 > 0, String(flush1975));
 
 if (failed > 0) {
   console.error(`\n${failed} checks failed`);
