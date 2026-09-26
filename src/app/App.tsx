@@ -3,6 +3,7 @@ import { EraView } from "./views/EraView.tsx";
 import { KindView } from "./views/KindView.tsx";
 import { GeoView } from "./views/GeoView.tsx";
 import { useUrlState } from "./hooks/useUrlState.ts";
+import { SeriesBar, SeriesFooter } from "./components/Brand.tsx";
 
 const VIEWS = [
   { id: "era", label: "時代", hint: "1975–2023", ready: true },
@@ -20,6 +21,7 @@ export function App() {
   return (
     <div className="min-h-dvh">
       <header className="border-b border-rule bg-paper/85 backdrop-blur-sm">
+        <SeriesBar />
         <div className="mx-auto flex w-full max-w-[1240px] flex-wrap items-end justify-between gap-4 px-6 pt-5">
           <div>
             <h1 className="text-[15px] font-semibold tracking-tight">
@@ -62,12 +64,7 @@ export function App() {
       <footer className="mx-auto w-full max-w-[1240px] px-6 pt-2 pb-10 text-[11px] leading-relaxed text-faint">
         出典: 公害等調整委員会「公害苦情調査」、下水道・水洗化は社会・人口統計体系（e-Stat）。
         苦情は受付件数であり環境濃度そのものではない。種類別は2016年度まで。
-        <a
-          href="https://visualizing.jp/"
-          className="mt-2 block w-fit transition-colors duration-150 hover:text-muted"
-        >
-          visualizing.jp
-        </a>
+        <SeriesFooter />
       </footer>
     </div>
   );
